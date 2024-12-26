@@ -392,6 +392,20 @@ type GrantsService interface {
 // the table (along with **USE_SCHEMA** and **USE_CATALOG**).
 type LakehouseMonitorsService interface {
 
+	// Cancel refresh.
+	//
+	// Cancel an active monitor refresh for the given refresh ID.
+	//
+	// The caller must either: 1. be an owner of the table's parent catalog 2.
+	// have **USE_CATALOG** on the table's parent catalog and be an owner of the
+	// table's parent schema 3. have the following permissions: -
+	// **USE_CATALOG** on the table's parent catalog - **USE_SCHEMA** on the
+	// table's parent schema - be an owner of the table
+	//
+	// Additionally, the call must be made from the workspace where the monitor
+	// was created.
+	CancelRefresh(ctx context.Context, request CancelRefreshRequest) error
+
 	// Create a table monitor.
 	//
 	// Creates a new monitor for the specified table.
@@ -440,6 +454,50 @@ type LakehouseMonitorsService interface {
 	// dashboard) may be filtered out if the caller is in a different workspace
 	// than where the monitor was created.
 	Get(ctx context.Context, request GetLakehouseMonitorRequest) (*MonitorInfo, error)
+
+	// Get refresh.
+	//
+	// Gets info about a specific monitor refresh using the given refresh ID.
+	//
+	// The caller must either: 1. be an owner of the table's parent catalog 2.
+	// have **USE_CATALOG** on the table's parent catalog and be an owner of the
+	// table's parent schema 3. have the following permissions: -
+	// **USE_CATALOG** on the table's parent catalog - **USE_SCHEMA** on the
+	// table's parent schema - **SELECT** privilege on the table.
+	//
+	// Additionally, the call must be made from the workspace where the monitor
+	// was created.
+	GetRefresh(ctx context.Context, request GetRefreshRequest) (*MonitorRefreshInfo, error)
+
+	// List refreshes.
+	//
+	// Gets an array containing the history of the most recent refreshes (up to
+	// 25) for this table.
+	//
+	// The caller must either: 1. be an owner of the table's parent catalog 2.
+	// have **USE_CATALOG** on the table's parent catalog and be an owner of the
+	// table's parent schema 3. have the following permissions: -
+	// **USE_CATALOG** on the table's parent catalog - **USE_SCHEMA** on the
+	// table's parent schema - **SELECT** privilege on the table.
+	//
+	// Additionally, the call must be made from the workspace where the monitor
+	// was created.
+	ListRefreshes(ctx context.Context, request ListRefreshesRequest) ([]MonitorRefreshInfo, error)
+
+	// Queue a metric refresh for a monitor.
+	//
+	// Queues a metric refresh on the monitor for the specified table. The
+	// refresh will execute in the background.
+	//
+	// The caller must either: 1. be an owner of the table's parent catalog 2.
+	// have **USE_CATALOG** on the table's parent catalog and be an owner of the
+	// table's parent schema 3. have the following permissions: -
+	// **USE_CATALOG** on the table's parent catalog - **USE_SCHEMA** on the
+	// table's parent schema - be an owner of the table
+	//
+	// Additionally, the call must be made from the workspace where the monitor
+	// was created.
+	RunRefresh(ctx context.Context, request RunRefreshRequest) (*MonitorRefreshInfo, error)
 
 	// Update a table monitor.
 	//
@@ -618,6 +676,28 @@ type ModelVersionsService interface {
 	//
 	// Currently only the comment of the model version can be updated.
 	Update(ctx context.Context, request UpdateModelVersionRequest) (*ModelVersionInfo, error)
+}
+
+// Online tables provide lower latency and higher QPS access to data from Delta
+// tables.
+type OnlineTablesService interface {
+
+	// Create an Online Table.
+	//
+	// Create a new Online Table.
+	Create(ctx context.Context, request ViewData) (*OnlineTable, error)
+
+	// Delete an Online Table.
+	//
+	// Delete an online table. Warning: This will delete all the data in the
+	// online table. If the source Delta table was deleted or modified since
+	// this Online Table was created, this will lose the data forever!
+	Delete(ctx context.Context, request DeleteOnlineTableRequest) error
+
+	// Get an Online Table.
+	//
+	// Get information about an existing online table and its status.
+	Get(ctx context.Context, request GetOnlineTableRequest) (*OnlineTable, error)
 }
 
 // Databricks provides a hosted version of MLflow Model Registry in Unity
@@ -1060,7 +1140,7 @@ type VolumesService interface {
 
 	// List Volumes.
 	//
-	// Gets an array of all volumes for the current metastore under the parent
+	// Gets an array of volumes for the current metastore under the parent
 	// catalog and schema.
 	//
 	// The returned volumes are filtered based on the privileges of the calling
@@ -1074,7 +1154,7 @@ type VolumesService interface {
 	// There is no guarantee of a specific ordering of the elements in the
 	// array.
 	//
-	// Use ListAll() to get all VolumeInfo instances
+	// Use ListAll() to get all VolumeInfo instances, which will iterate over every result page.
 	List(ctx context.Context, request ListVolumesRequest) (*ListVolumesResponseContent, error)
 
 	// Get a Volume.

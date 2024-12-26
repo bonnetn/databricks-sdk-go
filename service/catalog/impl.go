@@ -252,7 +252,7 @@ func (a *connectionsImpl) Create(ctx context.Context, request CreateConnection) 
 }
 
 func (a *connectionsImpl) Delete(ctx context.Context, request DeleteConnectionRequest) error {
-	path := fmt.Sprintf("/api/2.1/unity-catalog/connections/%v", request.NameArg)
+	path := fmt.Sprintf("/api/2.1/unity-catalog/connections/%v", request.Name)
 	headers := make(map[string]string)
 	headers["Accept"] = "application/json"
 	err := a.client.Do(ctx, http.MethodDelete, path, headers, request, nil)
@@ -261,7 +261,7 @@ func (a *connectionsImpl) Delete(ctx context.Context, request DeleteConnectionRe
 
 func (a *connectionsImpl) Get(ctx context.Context, request GetConnectionRequest) (*ConnectionInfo, error) {
 	var connectionInfo ConnectionInfo
-	path := fmt.Sprintf("/api/2.1/unity-catalog/connections/%v", request.NameArg)
+	path := fmt.Sprintf("/api/2.1/unity-catalog/connections/%v", request.Name)
 	headers := make(map[string]string)
 	headers["Accept"] = "application/json"
 	err := a.client.Do(ctx, http.MethodGet, path, headers, request, &connectionInfo)
@@ -279,7 +279,7 @@ func (a *connectionsImpl) List(ctx context.Context) (*ListConnectionsResponse, e
 
 func (a *connectionsImpl) Update(ctx context.Context, request UpdateConnection) (*ConnectionInfo, error) {
 	var connectionInfo ConnectionInfo
-	path := fmt.Sprintf("/api/2.1/unity-catalog/connections/%v", request.NameArg)
+	path := fmt.Sprintf("/api/2.1/unity-catalog/connections/%v", request.Name)
 	headers := make(map[string]string)
 	headers["Accept"] = "application/json"
 	headers["Content-Type"] = "application/json"
@@ -427,6 +427,13 @@ type lakehouseMonitorsImpl struct {
 	client *client.DatabricksClient
 }
 
+func (a *lakehouseMonitorsImpl) CancelRefresh(ctx context.Context, request CancelRefreshRequest) error {
+	path := fmt.Sprintf("/api/2.1/unity-catalog/tables/%v/monitor/refreshes/%v/cancel", request.FullName, request.RefreshId)
+	headers := make(map[string]string)
+	err := a.client.Do(ctx, http.MethodPost, path, headers, nil, nil)
+	return err
+}
+
 func (a *lakehouseMonitorsImpl) Create(ctx context.Context, request CreateMonitor) (*MonitorInfo, error) {
 	var monitorInfo MonitorInfo
 	path := fmt.Sprintf("/api/2.1/unity-catalog/tables/%v/monitor", request.FullName)
@@ -451,6 +458,33 @@ func (a *lakehouseMonitorsImpl) Get(ctx context.Context, request GetLakehouseMon
 	headers["Accept"] = "application/json"
 	err := a.client.Do(ctx, http.MethodGet, path, headers, request, &monitorInfo)
 	return &monitorInfo, err
+}
+
+func (a *lakehouseMonitorsImpl) GetRefresh(ctx context.Context, request GetRefreshRequest) (*MonitorRefreshInfo, error) {
+	var monitorRefreshInfo MonitorRefreshInfo
+	path := fmt.Sprintf("/api/2.1/unity-catalog/tables/%v/monitor/refreshes/%v", request.FullName, request.RefreshId)
+	headers := make(map[string]string)
+	headers["Accept"] = "application/json"
+	err := a.client.Do(ctx, http.MethodGet, path, headers, request, &monitorRefreshInfo)
+	return &monitorRefreshInfo, err
+}
+
+func (a *lakehouseMonitorsImpl) ListRefreshes(ctx context.Context, request ListRefreshesRequest) ([]MonitorRefreshInfo, error) {
+	var monitorRefreshInfoList []MonitorRefreshInfo
+	path := fmt.Sprintf("/api/2.1/unity-catalog/tables/%v/monitor/refreshes", request.FullName)
+	headers := make(map[string]string)
+	headers["Accept"] = "application/json"
+	err := a.client.Do(ctx, http.MethodGet, path, headers, request, &monitorRefreshInfoList)
+	return monitorRefreshInfoList, err
+}
+
+func (a *lakehouseMonitorsImpl) RunRefresh(ctx context.Context, request RunRefreshRequest) (*MonitorRefreshInfo, error) {
+	var monitorRefreshInfo MonitorRefreshInfo
+	path := fmt.Sprintf("/api/2.1/unity-catalog/tables/%v/monitor/refreshes", request.FullName)
+	headers := make(map[string]string)
+	headers["Accept"] = "application/json"
+	err := a.client.Do(ctx, http.MethodPost, path, headers, nil, &monitorRefreshInfo)
+	return &monitorRefreshInfo, err
 }
 
 func (a *lakehouseMonitorsImpl) Update(ctx context.Context, request UpdateMonitor) (*MonitorInfo, error) {
@@ -605,6 +639,38 @@ func (a *modelVersionsImpl) Update(ctx context.Context, request UpdateModelVersi
 	headers["Content-Type"] = "application/json"
 	err := a.client.Do(ctx, http.MethodPatch, path, headers, request, &modelVersionInfo)
 	return &modelVersionInfo, err
+}
+
+// unexported type that holds implementations of just OnlineTables API methods
+type onlineTablesImpl struct {
+	client *client.DatabricksClient
+}
+
+func (a *onlineTablesImpl) Create(ctx context.Context, request ViewData) (*OnlineTable, error) {
+	var onlineTable OnlineTable
+	path := "/api/2.0/online-tables"
+	headers := make(map[string]string)
+	headers["Accept"] = "application/json"
+	headers["Content-Type"] = "application/json"
+	err := a.client.Do(ctx, http.MethodPost, path, headers, request, &onlineTable)
+	return &onlineTable, err
+}
+
+func (a *onlineTablesImpl) Delete(ctx context.Context, request DeleteOnlineTableRequest) error {
+	path := fmt.Sprintf("/api/2.0/online-tables/%v", request.Name)
+	headers := make(map[string]string)
+	headers["Accept"] = "application/json"
+	err := a.client.Do(ctx, http.MethodDelete, path, headers, request, nil)
+	return err
+}
+
+func (a *onlineTablesImpl) Get(ctx context.Context, request GetOnlineTableRequest) (*OnlineTable, error) {
+	var onlineTable OnlineTable
+	path := fmt.Sprintf("/api/2.0/online-tables/%v", request.Name)
+	headers := make(map[string]string)
+	headers["Accept"] = "application/json"
+	err := a.client.Do(ctx, http.MethodGet, path, headers, request, &onlineTable)
+	return &onlineTable, err
 }
 
 // unexported type that holds implementations of just RegisteredModels API methods
@@ -913,7 +979,7 @@ func (a *volumesImpl) Create(ctx context.Context, request CreateVolumeRequestCon
 }
 
 func (a *volumesImpl) Delete(ctx context.Context, request DeleteVolumeRequest) error {
-	path := fmt.Sprintf("/api/2.1/unity-catalog/volumes/%v", request.FullNameArg)
+	path := fmt.Sprintf("/api/2.1/unity-catalog/volumes/%v", request.Name)
 	headers := make(map[string]string)
 	err := a.client.Do(ctx, http.MethodDelete, path, headers, request, nil)
 	return err
@@ -930,7 +996,7 @@ func (a *volumesImpl) List(ctx context.Context, request ListVolumesRequest) (*Li
 
 func (a *volumesImpl) Read(ctx context.Context, request ReadVolumeRequest) (*VolumeInfo, error) {
 	var volumeInfo VolumeInfo
-	path := fmt.Sprintf("/api/2.1/unity-catalog/volumes/%v", request.FullNameArg)
+	path := fmt.Sprintf("/api/2.1/unity-catalog/volumes/%v", request.Name)
 	headers := make(map[string]string)
 	headers["Accept"] = "application/json"
 	err := a.client.Do(ctx, http.MethodGet, path, headers, request, &volumeInfo)
@@ -939,7 +1005,7 @@ func (a *volumesImpl) Read(ctx context.Context, request ReadVolumeRequest) (*Vol
 
 func (a *volumesImpl) Update(ctx context.Context, request UpdateVolumeRequestContent) (*VolumeInfo, error) {
 	var volumeInfo VolumeInfo
-	path := fmt.Sprintf("/api/2.1/unity-catalog/volumes/%v", request.FullNameArg)
+	path := fmt.Sprintf("/api/2.1/unity-catalog/volumes/%v", request.Name)
 	headers := make(map[string]string)
 	headers["Accept"] = "application/json"
 	headers["Content-Type"] = "application/json"

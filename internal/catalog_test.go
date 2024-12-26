@@ -76,17 +76,17 @@ func TestUcAccVolumes(t *testing.T) {
 	})
 	require.NoError(t, err)
 	t.Cleanup(func() {
-		err = w.Volumes.DeleteByFullNameArg(ctx, createdVolume.FullName)
+		err = w.Volumes.DeleteByName(ctx, createdVolume.FullName)
 		require.NoError(t, err)
 	})
 
-	loadedVolume, err := w.Volumes.ReadByFullNameArg(ctx, createdVolume.FullName)
+	loadedVolume, err := w.Volumes.ReadByName(ctx, createdVolume.FullName)
 	require.NoError(t, err)
 	assert.Equal(t, createdVolume.Name, loadedVolume.Name)
 
 	_, err = w.Volumes.Update(ctx, catalog.UpdateVolumeRequestContent{
-		FullNameArg: loadedVolume.FullName,
-		Comment:     "Updated volume comment",
+		Name:    loadedVolume.FullName,
+		Comment: "Updated volume comment",
 	})
 	require.NoError(t, err)
 
@@ -285,8 +285,8 @@ func TestUcAccMetastores(t *testing.T) {
 	assert.NotEqual(t, created.MetastoreId, currentMetastore.MetastoreId)
 
 	_, err = w.Metastores.Update(ctx, catalog.UpdateMetastore{
-		Id:   created.MetastoreId,
-		Name: RandomName("go-sdk-updated"),
+		Id:      created.MetastoreId,
+		NewName: RandomName("go-sdk-updated"),
 	})
 	require.NoError(t, err)
 
@@ -369,15 +369,15 @@ func TestUcAccCatalogWorkspaceBindings(t *testing.T) {
 	require.NoError(t, err)
 
 	thisWorkspaceID := MustParseInt64(GetEnvOrSkipTest(t, "THIS_WORKSPACE_ID"))
-	updateFunction := func(ctx context.Context) error {
-		_, err := w.WorkspaceBindings.Update(ctx, catalog.UpdateWorkspaceBindings{
+	_, err = retries.New[catalog.CurrentWorkspaceBindings](
+		retries.OnErrors(apierr.ErrDeadlineExceeded),
+		retries.WithTimeout(1*time.Minute),
+	).Run(ctx, func(ctx context.Context) (*catalog.CurrentWorkspaceBindings, error) {
+		return w.WorkspaceBindings.Update(ctx, catalog.UpdateWorkspaceBindings{
 			Name:             created.Name,
 			AssignWorkspaces: []int64{thisWorkspaceID},
 		})
-		return err
-	}
-	r := retries.New[struct{}](retries.OnErrors(apierr.ErrDeadlineExceeded), retries.WithTimeout(1*time.Minute))
-	err = r.Wait(ctx, updateFunction)
+	})
 	require.NoError(t, err)
 
 	bindings, err := w.WorkspaceBindings.GetByName(ctx, created.Name)

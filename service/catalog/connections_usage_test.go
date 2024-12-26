@@ -34,7 +34,7 @@ func ExampleConnectionsAPI_Create_connections() {
 	// cleanup
 
 	err = w.Connections.Delete(ctx, catalog.DeleteConnectionRequest{
-		NameArg: connCreate.Name,
+		Name: connCreate.Name,
 	})
 	if err != nil {
 		panic(err)
@@ -62,7 +62,6 @@ func ExampleConnectionsAPI_Get_connections() {
 
 	connUpdate, err := w.Connections.Update(ctx, catalog.UpdateConnection{
 		Name:    connCreate.Name,
-		NameArg: connCreate.Name,
 		Options: map[string]string{"host": fmt.Sprintf("%s-fake-workspace.cloud.databricks.com", fmt.Sprintf("sdk-%x", time.Now().UnixNano())), "httpPath": fmt.Sprintf("/sql/1.0/warehouses/%s", fmt.Sprintf("sdk-%x", time.Now().UnixNano())), "personalAccessToken": fmt.Sprintf("sdk-%x", time.Now().UnixNano())},
 	})
 	if err != nil {
@@ -71,7 +70,7 @@ func ExampleConnectionsAPI_Get_connections() {
 	logger.Infof(ctx, "found %v", connUpdate)
 
 	conn, err := w.Connections.Get(ctx, catalog.GetConnectionRequest{
-		NameArg: connUpdate.Name,
+		Name: connUpdate.Name,
 	})
 	if err != nil {
 		panic(err)
@@ -81,7 +80,7 @@ func ExampleConnectionsAPI_Get_connections() {
 	// cleanup
 
 	err = w.Connections.Delete(ctx, catalog.DeleteConnectionRequest{
-		NameArg: connCreate.Name,
+		Name: connCreate.Name,
 	})
 	if err != nil {
 		panic(err)
@@ -124,7 +123,6 @@ func ExampleConnectionsAPI_Update_connections() {
 
 	connUpdate, err := w.Connections.Update(ctx, catalog.UpdateConnection{
 		Name:    connCreate.Name,
-		NameArg: connCreate.Name,
 		Options: map[string]string{"host": fmt.Sprintf("%s-fake-workspace.cloud.databricks.com", fmt.Sprintf("sdk-%x", time.Now().UnixNano())), "httpPath": fmt.Sprintf("/sql/1.0/warehouses/%s", fmt.Sprintf("sdk-%x", time.Now().UnixNano())), "personalAccessToken": fmt.Sprintf("sdk-%x", time.Now().UnixNano())},
 	})
 	if err != nil {
@@ -135,7 +133,7 @@ func ExampleConnectionsAPI_Update_connections() {
 	// cleanup
 
 	err = w.Connections.Delete(ctx, catalog.DeleteConnectionRequest{
-		NameArg: connCreate.Name,
+		Name: connCreate.Name,
 	})
 	if err != nil {
 		panic(err)
